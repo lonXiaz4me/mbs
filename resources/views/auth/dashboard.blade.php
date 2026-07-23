@@ -104,7 +104,7 @@
               $statusMap = [
                 'pending'      => ['badge'=>'b-yellow','card'=>'c-yellow','bar'=>'#F5C518','width'=>'25%', 'labelKey'=>'statusPending',  'btn1'=>['key'=>'btnViewDocs',   'url'=>'#'],        'btn2'=>['key'=>'btnCheckStatus',  'url'=>'#']],
                 'approved'     => ['badge'=>'b-green', 'card'=>'c-green', 'bar'=>'#28a745','width'=>'50%', 'labelKey'=>'statusApproved', 'btn1'=>['key'=>'btnViewDocs',   'url'=>'#'],        'btn2'=>['key'=>'btnPayNow',       'url'=>route('payment.index',['id'=>$app->app_no])]],
-                'not_approved' => ['badge'=>'b-red','card'=>'c-red','bar'=>'#dc3545','width'=>'100%','labelKey'=>'statusRejected', 'btn1'=>['key'=>'btnViewReason', 'url'=>'#'], 'btn2'=>['key'=>'btnReapply', 'url'=>route('application', ['reapply' => $app->app_no])]],
+                'not_approved' => ['badge'=>'b-red',   'card'=>'c-red',   'bar'=>'#dc3545','width'=>'100%','labelKey'=>'statusRejected', 'btn1'=>['key'=>'btnViewReason', 'url'=>'#'],        'btn2'=>['key'=>'btnReapply',      'url'=>'#']],
                 'completed'    => ['badge'=>'b-blue',  'card'=>'c-blue',  'bar'=>'#007bff','width'=>'100%','labelKey'=>'statusCompleted','btn1'=>['key'=>'btnViewDocs',   'url'=>'#'],        'btn2'=>['key'=>'btnPrintLicence', 'url'=>'#']],
               ];
               $current = $statusMap[$app->app_status] ?? ['badge'=>'b-gray','card'=>'c-gray','bar'=>'#6c757d','width'=>'0%','labelKey'=>'statusUnknown','btn1'=>['key'=>'btnHelp','url'=>'#'],'btn2'=>['key'=>'btnContact','url'=>'#']];
