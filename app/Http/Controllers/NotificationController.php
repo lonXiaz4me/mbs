@@ -40,8 +40,24 @@ class NotificationController extends Controller
             default   => null, // 'all' — no extra filter
         };
 
+        // FIX #26: Always sort newest-first, with a deterministic tiebreaker.
+        //
+        // PREVIOUS BEHAVIOUR: ->latest('created_at') alone orders by
+        // created_at DESC, which is correct in the common case — but if two
+        // notifications share the exact same created_at (same second, e.g.
+        // several notifications fired back-to-back in one request, or a
+        // seeded/backfilled dataset), the order between those tied rows is
+        // left to whatever the database happens to return, which isn't
+        // guaranteed to be insertion order.
+        //
+        // FIX: Add noti_id DESC as a secondary sort key. noti_id is an
+        // auto-increment primary key, so it's monotonically increasing with
+        // insertion order — this guarantees that among any rows with equal
+        // timestamps, the one inserted later always appears above the one
+        // inserted earlier, so "newest at the top" holds unconditionally.
         $notifications = $query
-            ->latest('created_at')
+            ->orderByDesc('created_at')
+            ->orderByDesc('noti_id')
             ->take(20)
             ->get()
             ->map(function ($n) {

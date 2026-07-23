@@ -15,10 +15,38 @@ use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
 {
-    public function index()
-    {
-        return view('auth.application');
+    public function index(Request $request)
+{
+    // "Mohon Semula" (Reapply) — when the user clicks this button on a
+    // rejected application card, we carry over their previously entered
+    // details so they don't have to retype everything. We deliberately
+    // do NOT carry over: the rejection reason/status message (not
+    // relevant to a new submission), nor the uploaded documents (the
+    // whole point of reapplying is usually to fix a document issue, so
+    // forcing fresh uploads is the safer default).
+    $reapplyApp = null;
+
+    $reapplyNo = $request->query('reapply');
+    if ($reapplyNo) {
+        $reapplyApp = Application::where('app_no', $reapplyNo)
+            ->where('user_id', Auth::id())
+            ->where('app_status', 'not_approved')
+            ->first();
     }
+
+    return view('auth.application', [
+        'reapplyData' => $reapplyApp ? [
+            'company_name'     => $reapplyApp->company_name,
+            'ssm_no'           => $reapplyApp->ssm_no,
+            'company_email'    => $reapplyApp->company_email,
+            'company_no'       => $reapplyApp->company_phone,
+            'category'         => $reapplyApp->category,
+            'type_of_business' => $reapplyApp->type_of_business,
+            'location'         => $reapplyApp->location,
+            'total_parking'    => $reapplyApp->total_parking,
+        ] : null,
+    ]);
+}
 
     public function store(Request $request)
     {

@@ -48,9 +48,16 @@ class Notification extends Model
     }
 
     // ── Static helper ────────────────────────────────────────────────────────
-    public static function send(int $userId, int $appId, string $type, string $message): void
+    // FIX: previously declared `: void` and didn't return the created row.
+    // Callers that only fire-and-forget (ApplicationController::store(),
+    // PaymentController::store(), etc.) never noticed, but DatabaseSeeder
+    // needs the created Notification instance back so it can look up its
+    // noti_id and backdate its created_at. Returning static::create(...)'s
+    // result fixes that without changing behavior for existing callers that
+    // ignore the return value.
+    public static function send(int $userId, int $appId, string $type, string $message): static
     {
-        static::create([
+        return static::create([
             'user_id'      => $userId,
             'app_id'       => $appId,
             'noti_type'    => $type,

@@ -468,7 +468,18 @@
 </div>
 
 <script>
-
+ 
+// ─── REAPPLY (Mohon Semula) PREFILL ───────────────────────────────────────────
+// Populated server-side by ApplicationController::index() whenever the user
+// arrives via the "Mohon Semula" button on a rejected application (e.g.
+// /application?reapply=MBS-20260610-000001). Intentionally excludes the
+// rejection reason/officer note and all uploaded documents — those must be
+// reviewed/re-uploaded fresh. Runs only when there is no old() input already
+// present (i.e. not a validation-error redirect), since old() values already
+// take priority via the value="{{ old(...) }}" attributes above.
+const REAPPLY_DATA = @json($reapplyData ?? null);
+const HAS_OLD_INPUT = {{ $errors->any() || old('company_name') ? 'true' : 'false' }};
+ 
 // ─── TAB SWITCHER ─────────────────────────────────────────────────────────────
 function switchTab(key, mode) {
   const zone = document.getElementById('zone-' + key);
@@ -480,7 +491,7 @@ function switchTab(key, mode) {
   if (targetPanel) targetPanel.classList.add('active');
   if (targetTab)   targetTab.classList.add('active');
 }
-
+ 
 // ─── FILE UPLOAD PREVIEW ──────────────────────────────────────────────────────
 function showDualPreview(input, key) {
   const file = input.files[0];
@@ -509,12 +520,12 @@ function showDualPreview(input, key) {
   const errEl = document.getElementById('err-' + (key === 'lic' ? 'licence_img' : key + '_img'));
   if (errEl) errEl.classList.remove('visible');
 }
-
+ 
 // ─── REMOVE UPLOAD ────────────────────────────────────────────────────────────
 function removeUpload(key) {
   const zone    = document.getElementById('zone-' + key);
   const preview = document.getElementById('preview-' + key);
-
+ 
   if (key === 'loc') {
     document.getElementById('location_img').value    = '';
     document.getElementById('location_coords').value = '';
@@ -530,7 +541,7 @@ function removeUpload(key) {
     }
     return;
   }
-
+ 
   const mainInputId = key === 'lic' ? 'licence_img' : key + '_img';
   const mainInput   = document.getElementById(mainInputId);
   if (mainInput) mainInput.value = '';
@@ -542,7 +553,7 @@ function removeUpload(key) {
     switchTab(key, 'file');
   }
 }
-
+ 
 // ─── CAMERA POPUP ─────────────────────────────────────────────────────────────
 function openCameraForField(key, withGPS) {
   const w    = 500, h = 700;
@@ -555,15 +566,15 @@ function openCameraForField(key, withGPS) {
     ',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no'
   );
 }
-
+ 
 // ─── postMessage LISTENER ─────────────────────────────────────────────────────
 window.addEventListener('message', function (event) {
   if (event.origin !== window.location.origin) return;
   if (!event.data || event.data.type !== 'CAMERA_CAPTURE_DONE') return;
-
+ 
   const { dataUrl, coordsString, fileName, field } = event.data;
   const key = field || 'loc';
-
+ 
   fetch(dataUrl)
     .then(function(r) { return r.blob(); })
     .then(function(blob) {
@@ -574,25 +585,25 @@ window.addEventListener('message', function (event) {
       );
       const dt = new DataTransfer();
       dt.items.add(file);
-
+ 
       const inputIdMap = { ssm: 'ssm_img', ic: 'ic_img', lic: 'licence_img', loc: 'location_img' };
       const targetInput = document.getElementById(inputIdMap[key] || 'location_img');
       if (targetInput) targetInput.files = dt.files;
-
+ 
       const zone     = document.getElementById('zone-' + key);
       const preview  = document.getElementById('preview-' + key);
       const imgEl    = document.getElementById('img-' + key);
       const linkEl   = document.getElementById('link-' + key);
       const nameSpan = document.getElementById('name-' + key);
-
+ 
       imgEl.src  = dataUrl;
       imgEl.style.objectFit = 'contain';
       if (linkEl)   linkEl.href = dataUrl;
       if (nameSpan) nameSpan.textContent = file.name;
-
+ 
       if (zone)    zone.querySelectorAll('.upload-tabs, .upload-panel').forEach(el => el.style.display = 'none');
       if (preview) preview.classList.add('visible');
-
+ 
       if (key === 'loc') {
         document.getElementById('location_coords').value = coordsString || '';
         const chip       = document.getElementById('loc-coords-chip');
@@ -604,19 +615,19 @@ window.addEventListener('message', function (event) {
           chip.classList.remove('visible');
         }
       }
-
+ 
       if (zone) zone.classList.remove('field-error');
       const errId = key === 'lic' ? 'err-licence_img' : (key === 'loc' ? 'err-location_img' : 'err-' + key + '_img');
       const errEl = document.getElementById(errId);
       if (errEl) errEl.classList.remove('visible');
     });
 });
-
+ 
 // ─── CHECKBOX ─────────────────────────────────────────────────────────────────
 const declCheckbox = document.getElementById('declaration');
 const customCheck  = document.getElementById('custom-check');
 const checkSvg     = document.getElementById('check-svg');
-
+ 
 declCheckbox.addEventListener('change', function () {
   if (this.checked) {
     customCheck.style.backgroundColor = '#a07000';
@@ -631,14 +642,14 @@ declCheckbox.addEventListener('change', function () {
     checkSvg.style.display            = 'none';
   }
 });
-
+ 
 // ─── PAYMENT CALCULATOR ───────────────────────────────────────────────────────
 (function () {
   const locationSelect    = document.getElementById('locationSelect');
   const totalParkingInput = document.getElementById('totalParkingSelect');
   const paymentEmpty      = document.getElementById('paymentEmpty');
   const paymentRows       = document.getElementById('paymentRows');
-
+ 
   function calculatePayment() {
     const locationValue = locationSelect.value;
     const totalLots     = parseInt(totalParkingInput.value, 10);
@@ -668,18 +679,18 @@ declCheckbox.addEventListener('change', function () {
     paymentEmpty.style.display = 'none';
     paymentRows.style.display  = 'block';
   }
-
+ 
   locationSelect.addEventListener('change',  calculatePayment);
   totalParkingInput.addEventListener('input', calculatePayment);
   calculatePayment();
 })();
-
+ 
 // ─── CATEGORY FILTER ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
   const categorySelect     = document.getElementById('categorySelect');
   const businessTypeSelect = document.getElementById('businessTypeSelect');
   const allOptions         = Array.from(businessTypeSelect.querySelectorAll('option'));
-
+ 
   function filterBusinessTypes() {
     const selectedCategory     = categorySelect.value;
     const currentSelectedValue = businessTypeSelect.value;
@@ -694,184 +705,42 @@ document.addEventListener('DOMContentLoaded', function () {
       businessTypeSelect.value = '';
     }
   }
-
+ 
   filterBusinessTypes();
   categorySelect.addEventListener('change', filterBusinessTypes);
-});
-
-// ─── FORM VALIDATION ──────────────────────────────────────────────────────────
-document.getElementById('applicationForm').addEventListener('submit', function (e) {
-  const textFields = [
-    { name:'company_name',     label: window.MBS_I18N ? window.MBS_I18N.t('labelCompanyName') : 'Nama Syarikat' },
-    { name:'ssm_no',           label: window.MBS_I18N ? window.MBS_I18N.t('labelSsmNo') : 'No Pendaftaran SSM' },
-    { name:'company_email',    label: window.MBS_I18N ? window.MBS_I18N.t('labelCompanyEmail') : 'Email Rasmi Syarikat' },
-    { name:'company_no',    label: window.MBS_I18N ? window.MBS_I18N.t('labelCompanyPhone') : 'No. Telefon Syarikat' },
-    { name:'category',         label: window.MBS_I18N ? window.MBS_I18N.t('labelCategory') : 'Kategori Perniagaan' },
-    { name:'type_of_business', label: window.MBS_I18N ? window.MBS_I18N.t('labelBusinessType') : 'Jenis Perniagaan' },
-    { name:'location',         label: window.MBS_I18N ? window.MBS_I18N.t('labelLocation') : 'Lokasi' },
-    { name:'total_parking',    label: window.MBS_I18N ? window.MBS_I18N.t('labelTotalParking') : 'Jumlah Petak Dimohon' },
-  ];
-  const fileFields = [
-    { inputId:'ssm_img',      zoneId:'zone-ssm', errId:'err-ssm_img',     label: window.MBS_I18N ? window.MBS_I18N.t('labelSsmDoc') : 'Salinan SSM Syarikat' },
-    { inputId:'ic_img',       zoneId:'zone-ic',  errId:'err-ic_img',       label: window.MBS_I18N ? window.MBS_I18N.t('labelIcDoc') : 'Salinan IC Pemohon' },
-    { inputId:'licence_img',  zoneId:'zone-lic', errId:'err-licence_img',  label: window.MBS_I18N ? window.MBS_I18N.t('labelLicenceDoc') : 'Salinan Lesen Perniagaan' },
-    { inputId:'location_img', zoneId:'zone-loc', errId:'err-location_img', label: window.MBS_I18N ? window.MBS_I18N.t('labelLocationDoc') : 'Gambar Lokasi' },
-  ];
-  let errors = [], firstError = null;
-
-  textFields.forEach(function (f) {
-    const el    = document.getElementById(f.name) || document.querySelector('[name="' + f.name + '"]');
-    const errEl = document.getElementById('err-' + f.name);
-    if (!el) return;
-    let invalid = false;
-    if (el.tagName === 'SELECT')        { invalid = !el.value; }
-    else if (f.name === 'company_email'){ invalid = !el.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim()); }
-    else if (f.name === 'total_parking'){ invalid = !el.value || parseInt(el.value, 10) < 1; }
-    else                                { invalid = !el.value.trim(); }
-    el.classList.toggle('field-error', invalid);
-    if (errEl) errEl.classList.toggle('visible', invalid);
-    if (invalid) { errors.push(f.label); if (!firstError) firstError = el; }
-    el.addEventListener('input',  function() { if (this.value.trim()) { this.classList.remove('field-error'); if (errEl) errEl.classList.remove('visible'); } });
-    el.addEventListener('change', function() { if (this.value)        { this.classList.remove('field-error'); if (errEl) errEl.classList.remove('visible'); } });
-  });
-
-  fileFields.forEach(function (f) {
-    const input   = document.getElementById(f.inputId);
-    const zone    = document.getElementById(f.zoneId);
-    const errEl   = document.getElementById(f.errId);
-    const invalid = !input || !input.files || input.files.length === 0;
-    if (zone)  zone.classList.toggle('field-error', invalid);
-    if (errEl) errEl.classList.toggle('visible', invalid);
-    if (invalid) { errors.push(f.label); if (!firstError) firstError = zone || input; }
-  });
-
-  const errDeclEl = document.getElementById('err-declaration');
-  if (!declCheckbox.checked) {
-    customCheck.classList.add('check-error');
-    if (errDeclEl) errDeclEl.classList.add('visible');
-    errors.push(window.MBS_I18N ? window.MBS_I18N.t('declLabel') : 'Perakuan pemohon');
-    if (!firstError) firstError = customCheck;
-  } else {
-    customCheck.classList.remove('check-error');
-    if (errDeclEl) errDeclEl.classList.remove('visible');
+ 
+  // Re-apply the server-rendered business type AFTER the list has been
+  // filtered down to the selected category's options (the <select>'s
+  // "selected" attribute set server-side above may have been wiped out by
+  // innerHTML being rebuilt in filterBusinessTypes()).
+  if (categorySelect.value) {
+    filterBusinessTypes();
+    const preselectedBusinessType = businessTypeSelect.getAttribute('data-preselect');
   }
-
-  if (errors.length > 0) {
-    e.preventDefault();
-    const bar  = document.getElementById('errorSummaryBar');
-    const list = document.getElementById('errorSummaryList');
-    const missingPrefix = window.MBS_I18N ? window.MBS_I18N.t('errorMissingPrefix') : 'Tiada ';
-    list.innerHTML = errors.map(label => missingPrefix + label + '*, ').join('');
-    bar.classList.add('visible');
-    showToast('error', window.MBS_I18N ? window.MBS_I18N.t('toastValidationTitle') : 'Permohonan Tidak Lengkap', window.MBS_I18N ? window.MBS_I18N.t('toastValidationMsg') : 'Sila lengkapkan semua medan bertanda (*) sebelum menghantar.', 7000);
-    if (firstError) firstError.scrollIntoView({ behavior:'smooth', block:'center' });
-    return;
-  }
-
-  document.getElementById('errorSummaryBar').classList.remove('visible');
-
-  // FIX: All required fields pass — but submitting is a one-way action
-  // (ApplicationController::store() generates a permanent app_no and
-  // can't be undone from this page). Stop the native submit here and
-  // show a confirm popup summarizing the key details first, so a user
-  // who clicked submit by reflex gets one more chance to catch a typo.
-  e.preventDefault();
-
-  const totalEl = document.getElementById('pay-total');
-  mbsConfirm({
-    intent: 'warning',
-    icon: 'question',
-    title: window.MBS_I18N ? window.MBS_I18N.t('confirmSubmitTitle') : 'Hantar permohonan ini?',
-    message: window.MBS_I18N ? window.MBS_I18N.t('confirmSubmitMsg') : 'Sila pastikan semua maklumat dan dokumen yang dimuat naik adalah betul. Permohonan tidak boleh diubah selepas dihantar.',
-    detail: [
-      { k: window.MBS_I18N ? window.MBS_I18N.t('labelCompanyName') : 'Nama Syarikat', v: document.getElementById('company_name').value },
-      { k: window.MBS_I18N ? window.MBS_I18N.t('labelLocation') : 'Lokasi', v: document.getElementById('locationSelect').value || '—' },
-      { k: window.MBS_I18N ? window.MBS_I18N.t('labelTotalParking') : 'Jumlah Petak', v: document.getElementById('totalParkingSelect').value || '—' },
-      { k: window.MBS_I18N ? window.MBS_I18N.t('payRowTotal') : 'Anggaran Bayaran', v: totalEl ? totalEl.textContent : '—' },
-    ],
-    confirmText: window.MBS_I18N ? window.MBS_I18N.t('confirmSubmitOk') : 'Hantar',
-    cancelText:  window.MBS_I18N ? window.MBS_I18N.t('confirmSubmitCancel') : 'Semak Semula',
-    onConfirm: function () {
-      try { localStorage.removeItem(DRAFT_KEY); } catch(ex) {}
-      document.getElementById('applicationForm').submit();
-    },
-  });
 });
-
-// ─── SAVE / LOAD DRAFT ────────────────────────────────────────────────────────
-const DRAFT_KEY    = 'mbs_application_draft';
-const DRAFT_FIELDS = ['company_name','ssm_no','company_email','company_no','category','type_of_business','location','total_parking'];
-
-function saveDraft() {
-  const btn   = document.getElementById('saveDraftBtn');
-  const label = document.getElementById('draftBtnLabel');
-  btn.classList.add('saving');
-  label.textContent = window.MBS_I18N ? window.MBS_I18N.t('draftSaving') : 'Menyimpan…';
-  const draft = {};
-  DRAFT_FIELDS.forEach(function(name) {
-    const el = document.querySelector('[name="' + name + '"]');
-    if (el) draft[name] = el.value;
-  });
-  draft._savedAt = new Date().toISOString();
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(ex) {}
-  setTimeout(function() {
-    btn.classList.remove('saving');
-    btn.classList.add('saved');
-    label.textContent = (window.MBS_I18N ? window.MBS_I18N.t('draftSaved') : 'Draf Disimpan') + ' ✓';
-    setTimeout(function() { btn.classList.remove('saved'); label.textContent = window.MBS_I18N ? window.MBS_I18N.t('btnSaveDraft') : 'Simpan Draf'; }, 2500);
-  }, 600);
-}
-
-function loadDraft() {
-  let draft;
-  try { const raw = localStorage.getItem(DRAFT_KEY); if (!raw) return; draft = JSON.parse(raw); } catch(ex) { return; }
-  if (!draft) return;
-  DRAFT_FIELDS.forEach(function(name) {
-    if (draft[name] === undefined) return;
-    const el = document.querySelector('[name="' + name + '"]:not([disabled])');
-    if (el) el.value = draft[name];
-  });
-  const catEl = document.getElementById('categorySelect');
-  if (catEl && draft.category) {
-    catEl.value = draft.category;
-    catEl.dispatchEvent(new Event('change'));
-    setTimeout(function() {
-      const btEl = document.getElementById('businessTypeSelect');
-      if (btEl && draft.type_of_business) btEl.value = draft.type_of_business;
-    }, 0);
-  }
-  document.getElementById('locationSelect').dispatchEvent(new Event('change'));
-  document.getElementById('draftBanner').classList.add('visible');
-}
-
-function clearDraft() {
-  try { localStorage.removeItem(DRAFT_KEY); } catch(ex) {}
-  document.getElementById('draftBanner').classList.remove('visible');
-}
-
-document.getElementById('draftBannerClearBtn').addEventListener('click', function () {
-  mbsConfirm({
-    intent: 'danger',
-    icon: 'trash',
-    title: window.MBS_I18N ? window.MBS_I18N.t('confirmDiscardDraftTitle') : 'Buang draf yang disimpan?',
-    message: window.MBS_I18N ? window.MBS_I18N.t('draftDiscardConfirm') : 'Buang draf yang disimpan? Semua maklumat yang belum dihantar akan dipadamkan.',
-    confirmText: window.MBS_I18N ? window.MBS_I18N.t('draftDiscard') : 'Buang Draf',
-    cancelText:  window.MBS_I18N ? window.MBS_I18N.t('confirmKeep') : 'Kekalkan',
-    onConfirm: function () {
-      clearDraft();
-      document.getElementById('applicationForm').reset();
-      document.getElementById('categorySelect').dispatchEvent(new Event('change'));
-      document.getElementById('locationSelect').dispatchEvent(new Event('change'));
-      customCheck.style.backgroundColor = '';
-      checkSvg.style.display = 'none';
-      ['ssm','ic','lic'].forEach(function(key) { removeUpload(key); });
-      removeUpload('loc');
-    },
-  });
-});
-
+ 
+// ─── REAPPLY BANNER ────────────────────────────────────────────────────────────
+// Show the same banner used for localStorage drafts, but re-labelled, when
+// this page was loaded via "Mohon Semula". Only runs when there's no old()
+// validation-error input taking priority (those are already reflected via
+// the blade value="{{ old(...) }}" attributes and should not be overwritten).
 document.addEventListener('DOMContentLoaded', function () {
-  setTimeout(loadDraft, 50);
+  if (!REAPPLY_DATA || HAS_OLD_INPUT) return;
+ 
+  const banner = document.getElementById('draftBanner');
+  const textEl = document.getElementById('draftBannerText');
+  const clearBtn = document.getElementById('draftBannerClearBtn');
+ 
+  if (textEl) {
+    textEl.innerHTML = '<strong>' +
+      (window.MBS_I18N ? window.MBS_I18N.t('draftFound') : 'Maklumat dipulihkan.') +
+      '</strong> <span>Maklumat daripada permohonan yang ditolak telah dimuatkan semula (tanpa sebab penolakan). Sila muat naik semula dokumen sokongan dan semak sebelum menghantar.</span>';
+  }
+  // The "Buang Draf" clear button only makes sense for localStorage drafts —
+  // hide it for the reapply banner since there's nothing in localStorage to
+  // discard here.
+  if (clearBtn) clearBtn.style.display = 'none';
+  if (banner) banner.classList.add('visible');
 });
 </script>
 
