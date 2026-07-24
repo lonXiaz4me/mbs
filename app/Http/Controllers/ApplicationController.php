@@ -15,10 +15,35 @@ use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
 {
-    public function index()
-    {
-        return view('auth.application');
+    public function index(Request $request)
+{
+    $reapplyData = null;
+
+    if ($request->filled('reapply')) {
+        $old = Application::where('app_no', $request->query('reapply'))
+            ->where('user_id', auth()->id())
+            ->where('app_status', 'not_approved')
+            ->first();
+
+        if ($old) {
+            $reapplyData = [
+                'company_name'     => $old->company_name,
+                'ssm_no'           => $old->ssm_no,
+                'company_email'    => $old->company_email,
+                'company_no'       => $old->company_phone,
+                'category'         => $old->category,
+                'type_of_business' => $old->type_of_business,
+                'location'         => $old->location,
+                'total_parking'    => $old->total_parking,
+            ];
+            // Deliberately excluded: not_approved_reason, app_status,
+            // app_status_msg, ssm_img/ic_img/licence_img/location_img —
+            // since images are usually the actual problem, force re-upload.
+        }
     }
+
+    return view('auth.application', compact('reapplyData'));
+}
 
     public function store(Request $request)
     {

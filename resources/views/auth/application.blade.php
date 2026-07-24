@@ -113,22 +113,22 @@
           <div class="form-grid-2">
             <div class="form-field">
               <label class="f-label"><span data-i18n="labelCompanyName">Nama Syarikat</span><span class="f-required">*</span></label>
-              <input type="text" name="company_name" id="company_name" class="f-input" placeholder="cth: Acme Services Sdn Bhd" value="{{ old('company_name') }}">
+              <input type="text" name="company_name" id="company_name" class="f-input" placeholder="cth: Acme Services Sdn Bhd" value="{{ old('company_name', $reapplyData['company_name'] ?? '') }}">
               <span class="f-error-msg" id="err-company_name" data-i18n="errCompanyName">Sila masukkan nama syarikat.</span>
             </div>
             <div class="form-field">
               <label class="f-label"><span data-i18n="labelSsmNo">No Pendaftaran SSM</span><span class="f-required">*</span></label>
-              <input type="text" name="ssm_no" id="ssm_no" class="f-input" placeholder="cth: 202301XXXXXX" value="{{ old('ssm_no') }}">
+              <input type="text" name="ssm_no" id="ssm_no" class="f-input" placeholder="cth: 202301XXXXXX" 	value="{{ old('ssm_no', $reapplyData['ssm_no'] ?? '') }}">
               <span class="f-error-msg" id="err-ssm_no" data-i18n="errSsmNo">Sila masukkan no. pendaftaran SSM.</span>
             </div>
             <div class="form-field">
               <label class="f-label"><span data-i18n="labelCompanyEmail">Email Rasmi Syarikat</span><span class="f-required">*</span></label>
-              <input type="email" name="company_email" id="company_email" class="f-input" placeholder="cth: info@syarikat.com.my" value="{{ old('company_email') }}">
+              <input type="email" name="company_email" id="company_email" class="f-input" placeholder="cth: info@syarikat.com.my" value="{{ old('company_email', $reapplyData['company_email'] ?? '') }}">
               <span class="f-error-msg" id="err-company_email" data-i18n="errCompanyEmail">Sila masukkan alamat email yang sah.</span>
             </div>
             <div class="form-field">
               <label class="f-label"><span data-i18n="labelCompanyPhone">No. Telefon Syarikat</span><span class="f-required">*</span></label>
-              <input type="tel" name="company_no" id="company_no" class="f-input" placeholder="cth: 03-12345678" value="{{ old('company_no') }}">
+              <input type="tel" name="company_no" id="company_no" class="f-input" placeholder="cth: 03-12345678" value="{{ old('company_no', $reapplyData['company_no'] ?? '') }}">
               <span class="f-error-msg" id="err-company_no" data-i18n="errCompanyPhone">Sila masukkan no. telefon syarikat.</span>
             </div>
           </div>
@@ -871,8 +871,13 @@ document.getElementById('draftBannerClearBtn').addEventListener('click', functio
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-  setTimeout(loadDraft, 50);
+    setTimeout(loadDraft, 50);
 });
+@if(!$reapplyData)
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(loadDraft, 50);
+});
+@endif
 </script>
 
 <!-- ─── TOAST NOTIFICATION (success / failed) ────────────────────────────────── -->
